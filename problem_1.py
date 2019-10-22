@@ -34,6 +34,12 @@ class Node():
         self.next = None
         self.prev = None
         
+    def set_data(self, value):
+        """
+        Updates the value.
+        """
+        self.value = value
+        
     def get_data(self):
         """
         Return the key and value.
@@ -65,10 +71,12 @@ class DoublyLinkedList():
             self.head = node
         return node
     
-    def update_node_to_mru(self, node):
+    def update_node_to_mru(self, node, value=None):
         """
         Updates the node position to be the most recently used (mru) node.
         """
+        if value:
+            node.set_data(value)
         if node is not self.head:            
             prevNode = node.prev
             nextNode = node.next
@@ -101,7 +109,7 @@ class DoublyLinkedList():
         s = ""
         node = self.head
         while node:
-            s += str(node.get_data()[1]) + " <--> "
+            s += str((node.get_data())) + " <--> "
             node = node.next
         return s
         
@@ -115,6 +123,7 @@ class LRU_Cache(object):
         assert(type(capacity) == int), "Capacity has to be an integer"
         assert(capacity > 0), "Capacity has to be larger than 0"
         # Initialize class variables
+        # self.cache maps the key to the respective node
         self.cache = {}
         self.ll = DoublyLinkedList()
         self.capacity = capacity
@@ -138,7 +147,7 @@ class LRU_Cache(object):
         inserting the new item.
         """
         if key in self.cache:
-            self.ll.update_node_to_mru(self.cache[key])
+            self.ll.update_node_to_mru(self.cache[key], value)
         elif len(self.cache) < self.capacity:
             node = self.ll.prepend(key, value)
             self.cache[key] = node
@@ -162,10 +171,10 @@ class LRU_Cache(object):
 # max capacity: 5
 # input: [1, 2, 3, 4]
 # expected output: 
-# 1 <--> 
-# 2 <--> 1 <--> 
-# 3 <--> 2 <--> 1 <--> 
-# 4 <--> 3 <--> 2 <--> 1 <--> 
+# (1, 1) <--> 
+# (2, 2) <--> (1, 1) <--> 
+# (3, 3) <--> (2, 2) <--> (1, 1) <--> 
+# (4, 4) <--> (3, 3) <--> (2, 2) <--> (1, 1) <--> 
 
 print("--- Testcase 1: Set elements ---")
 cache = LRU_Cache(5)
@@ -179,11 +188,12 @@ for v in [1, 2, 3, 4]:
 # input: [1, 2, 9]
 # expected output: 
 # get value  1  from cache:  1
-# 1 <--> 4 <--> 3 <--> 2 <--> 
+# (1, 1) <--> (4, 4) <--> (3, 3) <--> (2, 2) <--> 
 # get value  2  from cache:  2
-# 2 <--> 1 <--> 4 <--> 3 <--> 
+# (2, 2) <--> (1, 1) <--> (4, 4) <--> (3, 3) <--> 
 # get value  9  from cache:  -1 (because 9 is not present in cache)
-# 2 <--> 1 <--> 4 <--> 3 <--> 
+# (2, 2) <--> (1, 1) <--> (4, 4) <--> (3, 3) <--> 
+
 
 print("--- Testcase 2: Get elements ---") 
 for v in [1, 2, 9]:
@@ -195,9 +205,10 @@ for v in [1, 2, 9]:
 # ==== Testcase 3: Set more elements ====
 # input: [5, 6, 7]
 # expected output: 
-# 5 <--> 2 <--> 1 <--> 4 <--> 3 <--> 
-# 6 <--> 5 <--> 2 <--> 1 <--> 4 <--> 
-# 7 <--> 6 <--> 5 <--> 2 <--> 1 <-->
+#(2, 2) <--> (1, 1) <--> (4, 4) <--> (3, 3) <--> 
+# (5, 5) <--> (2, 2) <--> (1, 1) <--> (4, 4) <--> (3, 3) <--> 
+# (6, 6) <--> (5, 5) <--> (2, 2) <--> (1, 1) <--> (4, 4) <--> 
+# (7, 7) <--> (6, 6) <--> (5, 5) <--> (2, 2) <--> (1, 1) <--> 
 
 print("--- Testcase 3: Set more elements ---")
 print(cache)
@@ -215,11 +226,13 @@ cache.cache
 # input: [3, 4, 5, 'a']
 # expected output: 
 # get value  3  from cache:  -1
-# 7 <--> 6 <--> 5 <--> 2 <--> 1 <--> 
+# (7, 7) <--> (6, 6) <--> (5, 5) <--> (2, 2) <--> (1, 1) <--> 
 # get value  4  from cache:  -1
-# 7 <--> 6 <--> 5 <--> 2 <--> 1 <--> 
+# (7, 7) <--> (6, 6) <--> (5, 5) <--> (2, 2) <--> (1, 1) <--> 
 # get value  5  from cache:  5
-# 5 <--> 7 <--> 6 <--> 2 <--> 1 <--> 
+# (5, 5) <--> (7, 7) <--> (6, 6) <--> (2, 2) <--> (1, 1) <--> 
+# get value  a  from cache:  -1
+# (5, 5) <--> (7, 7) <--> (6, 6) <--> (2, 2) <--> (1, 1) <--> 
 
 print("--- Testcase 4: Get more elements ---")
 for v in [3, 4, 5, 'a']:
@@ -253,11 +266,14 @@ for v in [3, 4, 5, 'a']:
 # max capacity: 5
 # input: [1, 2, 3, 4, 1]
 # expected output: 
-# 1 <--> 
-# 2 <--> 1 <--> 
-# 1 <--> 2 <--> 
-# 4 <--> 1 <--> 2 <--> 
-# 5 <--> 4 <--> 1 <--> 2 <--> 
+# (1, 1) <--> 
+# (2, 2) <--> (1, 1) <--> 
+# (1, 1) <--> (2, 2) <--> 
+# (4, 4) <--> (1, 1) <--> (2, 2) <--> 
+# (5, 5) <--> (4, 4) <--> (1, 1) <--> (2, 2) <--> 
+# ('abc', 'abc') <--> (5, 5) <--> (4, 4) <--> (1, 1) <--> (2, 2) <--> 
+# (8, 8) <--> ('abc', 'abc') <--> (5, 5) <--> (4, 4) <--> (1, 1) <--> 
+# ('abc', 'abc') <--> (8, 8) <--> (5, 5) <--> (4, 4) <--> (1, 1) <--> 
 
 print("--- Testcase 6: Set elements ---")
 cache = LRU_Cache(5)
@@ -267,7 +283,34 @@ for v in [1, 2, 1, 4, 5, 'abc', 8, 'abc']:
 
 
 #%%
-# ==== Testcase 7: Play around with cache with max limit 0 ====
+# ==== Testcase 7: Change the value in an already existing node ====
+# expected output:
+# (1, 1) <--> 
+# ( 2, 2) <--> (1, 1) <--> 
+# (1, 10) <--> (2, 2) <--> 
+# Retrieve node with key 1
+# 10
+# (1, 10) <--> (2, 2) <--> 
+# Retrieve node with key 2
+# 2
+# (2, 2) <--> (1, 10) <--> 
+
+cache = LRU_Cache(2)
+for v in [1, 2]:
+    cache.set(v, v)
+    print(cache)
+cache.set(1, 10)
+print(cache)
+print("Retrieve node with key 1")
+print(cache.get(1)) # should return 10
+print(cache)
+print("Retrieve node with key 2")
+print(cache.get(2)) # should return 2
+print(cache)
+
+
+#%%
+# ==== Testcase 8: Play around with cache with max limit 0 ====
 # set input: [1, 2, 3]
 
 print("--- Testcase 7: Play around with cache with max limit 0 ---")
@@ -275,9 +318,5 @@ cache = LRU_Cache(0)
 for v in [1, 2, 3]:
     cache.set(v, v)
     print(cache)
-
-
-#%%
-
 
 
